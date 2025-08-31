@@ -3,19 +3,21 @@
 # dependencies
 node_modules/
 
-# Expo
-.expo/
-dist/
-web-build/
-expo-env.d.ts
-
-# Native
+# React Native
+.android/
+.idea/
 *.orig.*
 *.jks
 *.p8
 *.p12
 *.key
 *.mobileprovision
+*.gradle
+android/app/build/
+android/build/
+ios/Pods/
+ios/build/
+*.xcworkspace
 
 # Metro
 .metro-health-check*
@@ -34,4 +36,6 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# Vercel (if using)
 .vercel
