@@ -1,4 +1,4 @@
-import { createNavigationContainerRef, StackActions, CommonActions } from '@react-navigation/native';
+import { createNavigationContainerRef, CommonActions } from '@react-navigation/native';
 
 export type RootStackParamList = {
   Tabs: undefined;
@@ -13,9 +13,11 @@ export type TabsParamList = {
   Settings: undefined;
 };
 
-export const navigationRef = createNavigationContainerRef<RootStackParamList & TabsParamList>();
+type AllRoutes = RootStackParamList & TabsParamList;
 
-function mapPathToRoute(path: string): { name: keyof (RootStackParamList & TabsParamList); params?: object } {
+export const navigationRef = createNavigationContainerRef<AllRoutes>();
+
+function mapPathToRoute(path: string): { name: keyof AllRoutes; params?: object } {
   switch (path) {
     case '/onboarding':
       return { name: 'Onboarding' } as const;
@@ -42,7 +44,7 @@ export function push(pathOrName: string) {
   try {
     const { name, params } = mapPathToRoute(pathOrName);
     if (navigationRef.isReady()) {
-      navigationRef.navigate(name as never, params as never);
+      (navigationRef as any).navigate(name, params);
     } else {
       console.log('[router.push] nav not ready, queued', name, params);
     }
