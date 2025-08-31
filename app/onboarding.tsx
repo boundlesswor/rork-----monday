@@ -12,22 +12,21 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import LinearGradient from 'react-native-linear-gradient'; // Замена expo-linear-gradient
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { useNavigation } from '@react-navigation/native'; // Новый для replace
 import { useUserStore, UserProfile } from '@/stores/user-store';
 import { User, Volume2, Globe, ChevronLeft, MessageCircle } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { trigger } from 'react-native-haptic-feedback'; // Замена expo-haptics
 
 type Language = 'ru' | 'en' | 'uk';
-const { width, height } = Dimensions.get('window');
 
+const { width, height } = Dimensions.get('window');
 // ЕДИНЫЕ СЛОТЫ / ВЫСОТЫ (без "магии")
-const ICON_SLOT = 88;                               // зона для иконки (высота)
-const FOOTER_HEIGHT = 72;                           // высота футера с кнопкой
+const ICON_SLOT = 88; // зона для иконки (высота)
+const FOOTER_HEIGHT = 72; // высота футера с кнопкой
 // Резерв под клавиатуру — фиксируем экран будто клава уже открыта (чуть меньше → поле ближе к клавиатуре)
 const RESERVED_KEYBOARD_AREA = Platform.OS === 'android' ? 220 : 200;
-
 // ---------- i18n ----------
 const getSteps = (language: Language) => {
   const t = {
@@ -47,13 +46,12 @@ const getSteps = (language: Language) => {
     },
     uk: {
       language: { title: 'Оберіть мову', subtitle: 'Виберіть бажану мову' },
-      name: { title: 'Як до вас звертатися?', subtitle: 'Введіть ваше імʼя або як ви хочете, щоб до вас зверталися' },
+      name: { title: 'Як до вас звертатися?', subtitle: 'Введіть ваше імʼя или як ви хочете, щоб до вас зверталися' },
       voice: { title: 'Голос асистента', subtitle: 'Оберіть голос вашого ІІ-асистента Monday' },
       personality: { title: 'Налаштування спілкування', subtitle: 'Опишіть, як ви хочете, щоб асистент з вами спілкувався' },
       btn: { cont: 'Продовжити', start: 'Почати' },
     },
   }[language];
-
   return [
     { id: 'language', ...t.language, btn: t.btn },
     { id: 'name', ...t.name, btn: t.btn },
@@ -67,22 +65,20 @@ export default function OnboardingScreen() {
   const [currentStep, setCurrentStep] = useState(0);
   const [slideAnim] = useState(new Animated.Value(0));
   const [formData, setFormData] = useState({
-    language: 'ru' as Language,
+    language: 'ru',
     name: '',
-    voiceGender: 'female' as 'male' | 'female',
+    voiceGender: 'female',
     personalityPrompt: '',
   });
-
+  const navigation = useNavigation(); // Для replace
   const { setProfile, completeOnboarding } = useUserStore();
   const steps = getSteps(formData.language);
-
   // контентная высота будто клава уже открыта
   const contentMinHeight =
     Math.max(320, height - RESERVED_KEYBOARD_AREA - FOOTER_HEIGHT - insets.top - insets.bottom);
 
   const handleNext = () => {
-    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
+    if (Platform.OS !== 'web') trigger('impactLight'); // Замена Haptics
     if (currentStep < steps.length - 1) {
       const next = currentStep + 1;
       Animated.timing(slideAnim, {
@@ -93,7 +89,7 @@ export default function OnboardingScreen() {
       setCurrentStep(next);
       Keyboard.dismiss();
     } else {
-      const profile: UserProfile = {
+      const profile = {
         name: formData.name,
         language: formData.language,
         voiceGender: formData.voiceGender,
@@ -105,12 +101,12 @@ export default function OnboardingScreen() {
       };
       setProfile(profile);
       completeOnboarding();
-      setTimeout(() => router.replace('/(tabs)/home'), 80);
+      setTimeout(() => navigation.replace('tabs'), 80); // Замена router.replace('/(tabs)/home') — 'tabs' как nested
     }
   };
 
   const handleBack = () => {
-    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== 'web') trigger('impactLight');
     if (currentStep === 0) return;
     const prev = currentStep - 1;
     Animated.timing(slideAnim, {
@@ -137,7 +133,7 @@ export default function OnboardingScreen() {
   };
 
   // ---------- Steps ----------
-  const StepIcon = ({ children }: { children: React.ReactNode }) => (
+  const StepIcon = ({ children }) => (
     <View style={styles.iconSlot}>{children}</View>
   );
 
@@ -146,7 +142,6 @@ export default function OnboardingScreen() {
       <StepIcon><Globe size={64} color="#8B5CF6" /></StepIcon>
       <Text style={styles.stepTitle}>{steps[0].title}</Text>
       <Text style={styles.stepSubtitle}>{steps[0].subtitle}</Text>
-
       <View style={styles.optionsCol}>
         {[
           { key: 'ru', label: 'Русский' },
@@ -156,7 +151,7 @@ export default function OnboardingScreen() {
           <TouchableOpacity
             key={opt.key}
             style={styles.optionBtn}
-            onPress={() => setFormData({ ...formData, language: opt.key as Language })}
+            onPress={() => setFormData({ ...formData, language: opt.key })}
             activeOpacity={0.85}
           >
             <View style={[
@@ -184,7 +179,6 @@ export default function OnboardingScreen() {
       <StepIcon><User size={64} color="#8B5CF6" /></StepIcon>
       <Text style={styles.stepTitle}>{steps[1].title}</Text>
       <Text style={styles.stepSubtitle}>{steps[1].subtitle}</Text>
-
       <TextInput
         style={[styles.textInput, formData.name ? styles.textInputFilled : null]}
         placeholder={
@@ -209,7 +203,6 @@ export default function OnboardingScreen() {
       <StepIcon><Volume2 size={64} color="#8B5CF6" /></StepIcon>
       <Text style={styles.stepTitle}>{steps[2].title}</Text>
       <Text style={styles.stepSubtitle}>{steps[2].subtitle}</Text>
-
       <View style={styles.optionsCol}>
         {[
           {
@@ -228,7 +221,7 @@ export default function OnboardingScreen() {
           <TouchableOpacity
             key={opt.key}
             style={styles.optionBtn}
-            onPress={() => setFormData({ ...formData, voiceGender: opt.key as 'male' | 'female' })}
+            onPress={() => setFormData({ ...formData, voiceGender: opt.key })}
             activeOpacity={0.85}
           >
             <View style={[
@@ -259,7 +252,6 @@ export default function OnboardingScreen() {
       <StepIcon><MessageCircle size={64} color="#8B5CF6" /></StepIcon>
       <Text style={styles.stepTitle}>{steps[3].title}</Text>
       <Text style={styles.stepSubtitle}>{steps[3].subtitle}</Text>
-
       <ScrollView
         style={{ width: '100%' }}
         contentContainerStyle={{ paddingBottom: 8 }}
@@ -309,7 +301,6 @@ export default function OnboardingScreen() {
               ))}
             </View>
           </View>
-
           {/* Content (фиксированная верстка, как при открытой клавиатуре) */}
           <View style={styles.contentOuter}>
             <Animated.View
@@ -325,7 +316,6 @@ export default function OnboardingScreen() {
               ))}
             </Animated.View>
           </View>
-
           {/* Footer (кнопка на основном фоне, без черной полосы) */}
           <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
             <TouchableOpacity
