@@ -8,7 +8,7 @@ import {
   TextInput,
   Platform,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import LinearGradient from '@/components/Gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUserStore } from '@/stores/user-store';
 import { 
@@ -20,7 +20,7 @@ import {
   MessageCircle,
   Sparkles,
 } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/utils/haptics';
 
 const quickCommands = [
   { id: 'weather', text: 'What\'s the weather?', icon: Cloud },
@@ -45,7 +45,7 @@ export default function AssistantScreen() {
     if (!message.trim()) return;
 
     if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      Haptics.impact('Light');
     }
 
     const userMessage = {
@@ -68,14 +68,14 @@ export default function AssistantScreen() {
 
   const handleQuickCommand = (command: string) => {
     if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      Haptics.impact('Light');
     }
     setMessage(command);
   };
 
   const toggleListening = () => {
     if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      Haptics.impact('Medium');
     }
     setIsListening(!isListening);
     

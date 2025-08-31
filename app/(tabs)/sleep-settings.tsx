@@ -13,13 +13,13 @@ import {
   type NativeSyntheticEvent,
   type NativeScrollEvent,
 } from "react-native"
-import { LinearGradient } from "expo-linear-gradient"
+import LinearGradient from "@/components/Gradient"
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { useUserStore, type RepeatDay } from "@/stores/user-store"
 import { router } from "expo-router"
 import { ChevronLeft, Music2, BedDouble, AlarmClock } from "lucide-react-native"
-import * as Haptics from "expo-haptics"
-import { Audio } from "expo-av"
+import * as Haptics from "@/utils/haptics"
+import { Audio } from "@/services/audio"
 // Animated imported above from react-native
 
 const COLORS = {
@@ -454,7 +454,7 @@ function Wheel({ value, range, onChange, onInteractStart, onInteractEnd, testID 
     const next = range[actualIndex]
     if (next !== value) {
       onChange(next)
-      if (Platform.OS !== "web") Haptics.selectionAsync().catch(() => {})
+      if (Platform.OS !== "web") Haptics.selection().catch(() => {})
     }
     const targetY = actualIndex * ITEM_H
     scrollRef.current?.scrollTo({ y: targetY, animated: true })

@@ -3,15 +3,15 @@ import {
   View, Text, StyleSheet, TouchableOpacity, Platform, Dimensions,
   PanResponder, GestureResponderEvent,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import LinearGradient from '@/components/Gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUserStore } from '@/stores/user-store';
 import {
   UserRound, ChevronRight, Globe, Timer, Hourglass, AlarmClock, BedDouble
 } from 'lucide-react-native';
-import { router } from 'expo-router';
+import * as nav from '@/utils/router';
 import Svg, { Circle, Path, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/utils/haptics';
 
 const DIAL_STROKE = 16 as const;
 const TAP_MOVE_THRESHOLD_DEG = 1.25 as const;
@@ -179,7 +179,7 @@ export default function HomeScreen() {
         prevAngRef.current = ang;
         movedRef.current = false;
         if (Platform.OS === 'ios') {
-          try { Haptics.selectionAsync(); } catch {}
+          try { Haptics.selection(); } catch {}
         }
 
         const bAng = (minutesToAngle(bedRef.current)+360)%360;
@@ -218,7 +218,7 @@ export default function HomeScreen() {
         const showMin = ah === 'bed' ? bedRef.current : wakeRef.current;
         if (showMin !== lastShownMinRef.current && Platform.OS !== 'web') {
           lastShownMinRef.current = showMin;
-          Haptics.selectionAsync();
+          Haptics.selection();
         }
       },
       onPanResponderRelease: () => {
@@ -281,7 +281,7 @@ export default function HomeScreen() {
           <SafeAreaView style={styles.safeArea}>
           <View style={styles.header} pointerEvents="box-none">
             <Text style={styles.logo}>AI MONDAY</Text>
-            <TouchableOpacity onPress={() => router.push('/(tabs)/settings')} activeOpacity={0.9}>
+            <TouchableOpacity onPress={() => nav.push('/(tabs)/settings')} activeOpacity={0.9}>
               <View style={styles.avatar}><UserRound size={18} color={COLORS.text} /></View>
             </TouchableOpacity>
           </View>
@@ -317,7 +317,7 @@ export default function HomeScreen() {
                 </View>
 
                 <View style={styles.centerTapArea} pointerEvents={isDragging ? 'none' : 'box-none'}>
-                  <TouchableOpacity disabled={isDragging} activeOpacity={0.9} onPress={() => router.push('/(tabs)/sleep-settings')} style={styles.centerPress}>
+                  <TouchableOpacity disabled={isDragging} activeOpacity={0.9} onPress={() => nav.push('/(tabs)/sleep-settings')} style={styles.centerPress}>
                     <View style={styles.centerInfo}>
                       <View style={styles.centerRow}>
                         <BedDouble size={16} color={COLORS.text} />
@@ -337,7 +337,7 @@ export default function HomeScreen() {
               </View>
             </View>
 
-            <TouchableOpacity style={styles.scheduleCard} onPress={() => router.push('/(tabs)/sleep-settings')} activeOpacity={0.85}>
+            <TouchableOpacity style={styles.scheduleCard} onPress={() => nav.push('/(tabs)/sleep-settings')} activeOpacity={0.85}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <View>
                   <Text style={styles.cardLabel}>{t.scheduleTitle}</Text>
@@ -348,12 +348,12 @@ export default function HomeScreen() {
             </TouchableOpacity>
 
             <View style={styles.actionsRow}>
-              <ActionButton label={t.stopwatch} icon={<Timer size={22} color={COLORS.text} />} onPress={() => router.push('/(tabs)/settings')} />
-              <ActionButton label={t.timer} icon={<Hourglass size={22} color={COLORS.text} />} onPress={() => router.push('/(tabs)/settings')} />
-              <ActionButton label={t.worldTime} icon={<Globe size={22} color={COLORS.text} />} onPress={() => router.push('/(tabs)/settings')} />
+              <ActionButton label={t.stopwatch} icon={<Timer size={22} color={COLORS.text} />} onPress={() => nav.push('/(tabs)/settings')} />
+              <ActionButton label={t.timer} icon={<Hourglass size={22} color={COLORS.text} />} onPress={() => nav.push('/(tabs)/settings')} />
+              <ActionButton label={t.worldTime} icon={<Globe size={22} color={COLORS.text} />} onPress={() => nav.push('/(tabs)/settings')} />
             </View>
 
-            <TouchableOpacity style={[styles.cta, { marginBottom: CARD_SPACING }]} activeOpacity={0.9} onPress={() => router.push('/(tabs)/assistant')} testID="voice-cta">
+            <TouchableOpacity style={[styles.cta, { marginBottom: CARD_SPACING }]} activeOpacity={0.9} onPress={() => nav.push('/(tabs)/assistant')} testID="voice-cta">
               <LinearGradient colors={[COLORS.primary, '#A78BFA']} style={styles.ctaInner}>
                 <Text style={styles.ctaText}>{t.talk}</Text>
               </LinearGradient>

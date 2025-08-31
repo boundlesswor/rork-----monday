@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import LinearGradient from '@/components/Gradient';
+import * as nav from '@/utils/router';
 import { useUserStore } from '@/stores/user-store';
 
 export default function IndexScreen() {
@@ -14,10 +14,10 @@ export default function IndexScreen() {
       
       if (!profile?.isOnboarded) {
         console.log('Index screen - Navigating to onboarding');
-        router.replace('/onboarding');
+        nav.replace('/onboarding');
       } else {
         console.log('Index screen - Navigating to tabs');
-        router.replace('/(tabs)/home');
+        nav.replace('/(tabs)/home');
       }
     }, 500);
 

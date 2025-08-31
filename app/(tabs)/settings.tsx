@@ -13,10 +13,10 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import LinearGradient from '@/components/Gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUserStore } from '@/stores/user-store';
-import { router } from 'expo-router';
+import * as nav from '@/utils/router';
 import { 
   User, 
   Volume2, 
@@ -29,7 +29,7 @@ import {
   Star,
   RotateCcw,
 } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/utils/haptics';
 
 export default function SettingsScreen() {
   const { profile, updateProfile, resetOnboarding } = useUserStore();
@@ -38,7 +38,7 @@ export default function SettingsScreen() {
 
   const handleHaptic = () => {
     if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      Haptics.impact('Light');
     }
   };
 
@@ -46,7 +46,7 @@ export default function SettingsScreen() {
     handleHaptic();
     resetOnboarding();
     setTimeout(() => {
-      router.replace('/onboarding');
+      nav.replace('/onboarding');
     }, 100);
   };
 
