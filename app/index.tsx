@@ -1,28 +1,28 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import LinearGradient from '@/components/Gradient';
-import * as nav from '@/utils/router';
+import LinearGradient from 'react-native-linear-gradient'; // Замена, если был expo
+import { useNavigation } from '@react-navigation/native'; // Новый для nav
 import { useUserStore } from '@/stores/user-store';
 
 export default function IndexScreen() {
   const { profile } = useUserStore();
+  const navigation = useNavigation(); // Для replace
 
   useEffect(() => {
     const timer = setTimeout(() => {
       console.log('Index screen - Profile:', profile);
       console.log('Index screen - Is onboarded:', profile?.isOnboarded);
-      
+     
       if (!profile?.isOnboarded) {
         console.log('Index screen - Navigating to onboarding');
-        nav.replace('/onboarding');
+        navigation.replace('onboarding'); // Замена nav.replace('/onboarding')
       } else {
         console.log('Index screen - Navigating to tabs');
-        nav.replace('/(tabs)/home');
+        navigation.replace('tabs'); // Замена nav.replace('/(tabs)/home') — теперь 'tabs' как nested
       }
     }, 500);
-
     return () => clearTimeout(timer);
-  }, [profile?.isOnboarded]);
+  }, [profile?.isOnboarded, navigation]);
 
   return (
     <LinearGradient
