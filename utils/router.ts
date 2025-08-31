@@ -1,4 +1,4 @@
-import { createNavigationContainerRef, CommonActions } from '@react-navigation/native';
+import { createNavigationContainerRef, CommonActions, type ParamListBase } from '@react-navigation/native';
 
 export type RootStackParamList = {
   Tabs: undefined;
@@ -15,9 +15,11 @@ export type TabsParamList = {
 
 type AllRoutes = RootStackParamList & TabsParamList;
 
-export const navigationRef = createNavigationContainerRef<AllRoutes>();
+type RouteName = keyof AllRoutes;
 
-function mapPathToRoute(path: string): { name: keyof AllRoutes; params?: object } {
+export const navigationRef = createNavigationContainerRef<ParamListBase>();
+
+function mapPathToRoute(path: string): { name: RouteName; params?: Record<string, unknown> } {
   switch (path) {
     case '/onboarding':
       return { name: 'Onboarding' } as const;
@@ -44,7 +46,7 @@ export function push(pathOrName: string) {
   try {
     const { name, params } = mapPathToRoute(pathOrName);
     if (navigationRef.isReady()) {
-      (navigationRef as any).navigate(name, params || {});
+      (navigationRef as any).navigate(name as never, (params ?? {}) as never);
     } else {
       console.log('[router.push] nav not ready, queued', name, params);
     }
@@ -57,7 +59,12 @@ export function replace(pathOrName: string) {
   try {
     const { name, params } = mapPathToRoute(pathOrName);
     if (navigationRef.isReady()) {
-      navigationRef.dispatch(CommonActions.reset({ index: 0, routes: [{ name: name as string, params: params || {} }] }));
+      navigationRef.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: name as never, params: (params ?? {}) as never }],
+        }) as never,
+      );
     } else {
       console.log('[router.replace] nav not ready, queued', name, params);
     }
