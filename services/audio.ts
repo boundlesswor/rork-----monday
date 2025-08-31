@@ -1,14 +1,9 @@
-let TrackPlayer: any = null;
-try {
-  // @ts-ignore
-  TrackPlayer = require('react-native-track-player');
-} catch {}
+import TrackPlayer from 'react-native-track-player'; // Прямой импорт (убрали try)
 
 export const Audio = {
   // For compatibility where Audio.Sound.createAsync was used
   Sound: {
     async createAsync(source: { uri: string }, initialStatus?: { volume?: number; shouldPlay?: boolean; isLooping?: boolean }, onPlaybackStatusUpdate?: (status: unknown) => void) {
-      if (!TrackPlayer) throw new Error('react-native-track-player not installed');
       await TrackPlayer.setupPlayer({});
       await TrackPlayer.reset();
       await TrackPlayer.add({ id: 'preview', url: source.uri, title: 'Preview' });
@@ -17,8 +12,7 @@ export const Audio = {
       }
       if (initialStatus?.shouldPlay !== false) await TrackPlayer.play();
       const sound = {
-        async stopAsync() { try { await TrackPlayer.stop(); } catch {}
-        },
+        async stopAsync() { try { await TrackPlayer.stop(); } catch {} },
         async unloadAsync() { try { await TrackPlayer.reset(); } catch {} },
       };
       return { sound };
