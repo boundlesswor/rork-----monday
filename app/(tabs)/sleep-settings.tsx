@@ -1,6 +1,4 @@
-"use client"
-
-import React, { useMemo, useState, useCallback, useRef, useEffect } from "react"
+import React, { useMemo, useState, useCallback, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,17 +8,14 @@ import {
   Platform,
   ScrollView,
   Animated,
-  type NativeSyntheticEvent,
-  type NativeScrollEvent,
-} from "react-native"
-import LinearGradient from "@/components/Gradient"
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
-import { useUserStore, type RepeatDay } from "@/stores/user-store"
-import { router } from "expo-router"
-import { ChevronLeft, Music2, BedDouble, AlarmClock } from "lucide-react-native"
-import * as Haptics from "@/utils/haptics"
-import { Audio } from "@/services/audio"
-// Animated imported above from react-native
+} from "react-native";
+import LinearGradient from 'react-native-linear-gradient'; // Замена
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { useUserStore, type RepeatDay } from "@/stores/user-store";
+import { useNavigation } from '@react-navigation/native'; // Новый импорт
+import { ChevronLeft, Music2, BedDouble, AlarmClock } from "lucide-react-native";
+import { trigger } from 'react-native-haptic-feedback'; // Замена Haptics
+import Sound from 'react-native-sound'; // Новая lib для аудио
 
 const COLORS = {
   bg: "#0A0A0F",
@@ -28,14 +23,12 @@ const COLORS = {
   sub: "#A7A7B3",
   stroke: "#2A2A36",
   primary: "#8B5CF6",
-  grad: ["#0A0A0F", "#1A1A2E", "#16213E"] as const,
-}
-
-const RADIUS = 16 as const
-const ITEM_H = 46 as const
-const VISIBLE_COUNT = 5 as const
-
-const RINGTONES: Readonly<Record<string, { title: string; url: string }>> = {
+  grad: ["#0A0A0F", "#1A1A2E", "#16213E"],
+};
+const RADIUS = 16;
+const ITEM_H = 46;
+const VISIBLE_COUNT = 5;
+const RINGTONES = {
   polaris: {
     title: "Polaris",
     url: "https://upload.wikimedia.org/wikipedia/commons/transcoded/4/41/Alarm_clock_test_sound.ogg/Alarm_clock_test_sound.ogg.mp3",
@@ -52,67 +45,72 @@ const RINGTONES: Readonly<Record<string, { title: string; url: string }>> = {
     title: "Soft Bells",
     url: "https://upload.wikimedia.org/wikipedia/commons/transcoded/2/26/Alarm_tone.ogg/Alarm_tone.ogg.mp3",
   },
-} as const
+};
 
-function toMinutes(hhmm: string): number {
-  const [h, m] = hhmm.split(":").map((v) => Number.parseInt(v, 10))
-  return (h % 24) * 60 + (m % 60)
+function toMinutes(hhmm) {
+  const [h, m] = hhmm.split(":").map((v) => Number.parseInt(v, 10));
+  return (h % 24) * 60 + (m % 60);
 }
 
-function toHHMM(total: number): string {
-  const t = ((total % (24 * 60)) + 24 * 60) % (24 * 60)
-  const h = Math.floor(t / 60)
-  const m = t % 60
-  const hh = h < 10 ? `0${h}` : `${h}`
-  const mm = m < 10 ? `0${m}` : `${m}`
-  return `${hh}:${mm}`
+function toHHMM(total) {
+  const t = ((total % (24 * 60)) + 24 * 60) % (24 * 60);
+  const h = Math.floor(t / 60);
+  const m = t % 60;
+  const hh = h < 10 ? `0${h}` : `${h}`;
+  const mm = m < 10 ? `0${m}` : `${m}`;
+  return `${hh}:${mm}`;
 }
 
-function duration(bed: number, wake: number): number {
-  const d = (wake - bed + 24 * 60) % (24 * 60)
-  return d === 0 ? 24 * 60 : d
+function duration(bed, wake) {
+  const d = (wake - bed + 24 * 60) % (24 * 60);
+  return d === 0 ? 24 * 60 : d;
 }
 
-class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props)
-    this.state = { hasError: false }
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
   }
+
   static getDerivedStateFromError() {
-    return { hasError: true }
+    return { hasError: true };
   }
-  componentDidCatch(error: unknown) {
-    console.error("SleepSettings error", error)
+
+  componentDidCatch(error) {
+    console.error("SleepSettings error", error);
   }
+
   render() {
     if (this.state.hasError) {
       return (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: COLORS.bg }}>
           <Text style={{ color: COLORS.text }}>Что-то пошло не так. Перезайдите на экран.</Text>
         </View>
-      )
+      );
     }
-    return this.props.children as React.ReactElement
+    return this.props.children;
   }
 }
 
-const hours = Array.from({ length: 24 }, (_, i) => i)
-const minutes = Array.from({ length: 60 }, (_, i) => i)
+const hours = Array.from({ length: 24 }, (_, i) => i);
+const minutes = Array.from({ length: 60 }, (_, i) => i);
 
 export default function SleepSettingsScreen() {
-  const { profile, sleepPlan, setSleepPlan } = useUserStore()
-  const insets = useSafeAreaInsets()
-  const [bed, setBed] = useState<number>(() => toMinutes(sleepPlan.bedTime))
-  const [wake, setWake] = useState<number>(() => toMinutes(sleepPlan.wakeTime))
-  const [days, setDays] = useState<RepeatDay[]>(sleepPlan.repeatDays)
-  const [enabled, setEnabled] = useState<boolean>(sleepPlan.enabled)
-  const [ringtone, setRingtone] = useState<string>(sleepPlan.ringtoneId ?? "polaris")
-  const [showMelodies, setShowMelodies] = useState<boolean>(false)
-  const [interactionCount, setInteractionCount] = useState<number>(0)
-  const [playingId, setPlayingId] = useState<string | null>(null)
-  const [previewError, setPreviewError] = useState<string | null>(null)
-  const soundRef = useRef<Audio.Sound | null>(null)
-  const tLang = profile?.language ?? "ru"
+  const { profile, sleepPlan, setSleepPlan } = useUserStore();
+  const insets = useSafeAreaInsets();
+  const navigation = useNavigation(); // Для навигации
+  const [bed, setBed] = useState(() => toMinutes(sleepPlan.bedTime));
+  const [wake, setWake] = useState(() => toMinutes(sleepPlan.wakeTime));
+  const [days, setDays] = useState(sleepPlan.repeatDays);
+  const [enabled, setEnabled] = useState(sleepPlan.enabled);
+  const [ringtone, setRingtone] = useState(sleepPlan.ringtoneId ?? "polaris");
+  const [showMelodies, setShowMelodies] = useState(false);
+  const [interactionCount, setInteractionCount] = useState(0);
+  const [playingId, setPlayingId] = useState(null);
+  const [previewError, setPreviewError] = useState(null);
+  const soundRef = useRef(null);
+
+  const tLang = profile?.language ?? "ru";
   const t = useMemo(() => {
     const map = {
       ru: {
@@ -151,97 +149,98 @@ export default function SleepSettingsScreen() {
         sleepDuration: "Сон: {{h}} год {{m}} хв",
         melodyTitle: "Мелодія",
       },
-    } as const
-    return map[tLang]
-  }, [tLang])
-  const durMin = duration(bed, wake)
-  const durH = Math.floor(durMin / 60)
-  const durM = durMin % 60
-  const toggleDay = (d: RepeatDay) => {
-    setDays((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d].sort((a, b) => a - b)))
-  }
-  const bedH = Math.floor(bed / 60)
-  const bedM = bed % 60
-  const wakeH = Math.floor(wake / 60)
-  const wakeM = wake % 60
-  const onSelectBed = useCallback(
-    (h: number, m: number) => {
-      const minutesVal = (h % 24) * 60 + (m % 60)
-      setBed(minutesVal)
-      setSleepPlan({ bedTime: toHHMM(minutesVal) })
-    },
-    [setSleepPlan],
-  )
-  const onSelectWake = useCallback(
-    (h: number, m: number) => {
-      const minutesVal = (h % 24) * 60 + (m % 60)
-      setWake(minutesVal)
-      setSleepPlan({ wakeTime: toHHMM(minutesVal) })
-    },
-    [setSleepPlan],
-  )
+    };
+    return map[tLang];
+  }, [tLang]);
 
-  const stopPreview = useCallback(async () => {
-    try {
-      if (soundRef.current) {
-        await soundRef.current.stopAsync().catch(() => {})
-        await soundRef.current.unloadAsync().catch(() => {})
-      }
-    } catch (e) {
-      console.log("stopPreview error", e)
-    } finally {
-      soundRef.current = null
-      setPlayingId(null)
+  const durMin = duration(bed, wake);
+  const durH = Math.floor(durMin / 60);
+  const durM = durMin % 60;
+
+  const toggleDay = (d) => {
+    setDays((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d].sort((a, b) => a - b)));
+  };
+
+  const bedH = Math.floor(bed / 60);
+  const bedM = bed % 60;
+  const wakeH = Math.floor(wake / 60);
+  const wakeM = wake % 60;
+
+  const onSelectBed = useCallback(
+    (h, m) => {
+      const minutesVal = (h % 24) * 60 + (m % 60);
+      setBed(minutesVal);
+      setSleepPlan({ bedTime: toHHMM(minutesVal) });
+    },
+    [setSleepPlan],
+  );
+
+  const onSelectWake = useCallback(
+    (h, m) => {
+      const minutesVal = (h % 24) * 60 + (m % 60);
+      setWake(minutesVal);
+      setSleepPlan({ wakeTime: toHHMM(minutesVal) });
+    },
+    [setSleepPlan],
+  );
+
+  const stopPreview = useCallback(() => {
+    if (soundRef.current) {
+      soundRef.current.stop(() => {
+        soundRef.current.release();
+        soundRef.current = null;
+        setPlayingId(null);
+      });
     }
-  }, [])
+  }, []);
 
   const togglePreview = useCallback(
-    async (id: string) => {
-      try {
-        setPreviewError(null)
-        if (playingId === id) {
-          await stopPreview()
-          return
-        }
-        await stopPreview()
-        const src = RINGTONES[id]?.url
-        if (!src) {
-          setPreviewError("Аудио недоступно")
-          return
-        }
-        const { sound } = await Audio.Sound.createAsync(
-          { uri: src },
-          { volume: 1.0, shouldPlay: true, isLooping: false },
-          (status) => {
-            const s = status as unknown as { didJustFinish?: boolean }
-            if (s?.didJustFinish) {
-              stopPreview().catch(() => {})
-            }
-          }
-        )
-        soundRef.current = sound
-        setPlayingId(id)
-      } catch (err) {
-        console.log("togglePreview error", err)
-        setPreviewError("Не удалось воспроизвести. Попробуйте снова.")
+    (id) => {
+      setPreviewError(null);
+      if (playingId === id) {
+        stopPreview();
+        return;
       }
+      stopPreview();
+      const src = RINGTONES[id]?.url;
+      if (!src) {
+        setPreviewError("Аудио недоступно");
+        return;
+      }
+      const sound = new Sound(src, null, (error) => {
+        if (error) {
+          console.log("failed to load the sound", error);
+          setPreviewError("Не удалось воспроизвести. Попробуйте снова.");
+          return;
+        }
+        soundRef.current = sound;
+        setPlayingId(id);
+        sound.play((success) => {
+          if (success) {
+            stopPreview();
+          } else {
+            console.log("playback failed due to audio decoding errors");
+            stopPreview();
+          }
+        });
+      });
     },
-    [playingId, stopPreview]
-  )
+    [playingId, stopPreview],
+  );
 
   useEffect(() => {
-    if (interactionCount > 0) return
-    const incomingBed = toMinutes(sleepPlan.bedTime)
-    const incomingWake = toMinutes(sleepPlan.wakeTime)
-    if (incomingBed !== bed) setBed(incomingBed)
-    if (incomingWake !== wake) setWake(incomingWake)
-  }, [sleepPlan.bedTime, sleepPlan.wakeTime, interactionCount])
+    if (interactionCount > 0) return;
+    const incomingBed = toMinutes(sleepPlan.bedTime);
+    const incomingWake = toMinutes(sleepPlan.wakeTime);
+    if (incomingBed !== bed) setBed(incomingBed);
+    if (incomingWake !== wake) setWake(incomingWake);
+  }, [sleepPlan.bedTime, sleepPlan.wakeTime, interactionCount]);
 
   useEffect(() => {
     return () => {
-      stopPreview().catch(() => {})
-    }
-  }, [stopPreview])
+      stopPreview();
+    };
+  }, [stopPreview]);
 
   return (
     <ErrorBoundary>
@@ -249,7 +248,7 @@ export default function SleepSettingsScreen() {
         <LinearGradient colors={COLORS.grad} style={{ flex: 1 }}>
           <SafeAreaView style={{ flex: 1 }}>
             <View style={styles.header}>
-              <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} testID="go-back">
+              <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} testID="go-back">
                 <ChevronLeft size={22} color={COLORS.text} />
               </TouchableOpacity>
               <Text style={styles.headerTitle}>{t.title}</Text>
@@ -339,8 +338,8 @@ export default function SleepSettingsScreen() {
                 {showMelodies ? (
                   <View style={styles.melodyList}>
                     {Object.keys(RINGTONES).map((r) => {
-                      const isPlaying = playingId === r
-                      const label = RINGTONES[r]?.title ?? r
+                      const isPlaying = playingId === r;
+                      const label = RINGTONES[r]?.title ?? r;
                       return (
                         <View key={r} style={styles.melodyItem}>
                           <Text style={styles.melodyItemText}>{label}</Text>
@@ -355,9 +354,9 @@ export default function SleepSettingsScreen() {
                             </TouchableOpacity>
                             <TouchableOpacity
                               onPress={() => {
-                                setRingtone(r)
-                                setShowMelodies(false)
-                                stopPreview().catch(() => {})
+                                setRingtone(r);
+                                setShowMelodies(false);
+                                stopPreview();
                               }}
                               style={[styles.footerBtn, { height: 36, paddingHorizontal: 12, flex: undefined }]}
                               activeOpacity={0.9}
@@ -367,7 +366,7 @@ export default function SleepSettingsScreen() {
                             </TouchableOpacity>
                           </View>
                         </View>
-                      )
+                      );
                     })}
                     {previewError ? (
                       <Text style={{ color: "#FFB4B4", marginTop: 8, fontSize: 12 }}>{previewError}</Text>
@@ -379,8 +378,8 @@ export default function SleepSettingsScreen() {
                 <Text style={styles.cardTitle}>Дни</Text>
                 <View style={styles.daysFrame}>
                   {t.daysShort.map((d, index) => {
-                    const idx = index as RepeatDay
-                    const isActive = days.includes(idx)
+                    const idx = index;
+                    const isActive = days.includes(idx);
                     return (
                       <TouchableOpacity
                         key={index}
@@ -391,14 +390,14 @@ export default function SleepSettingsScreen() {
                       >
                         <Text style={[styles.dayLetter, isActive && styles.dayLetterActive]}>{d}</Text>
                       </TouchableOpacity>
-                    )
+                    );
                   })}
                 </View>
               </Card>
               <View style={styles.footer}>
                 <TouchableOpacity
                   style={[styles.footerBtn, styles.footerBtnGhost]}
-                  onPress={() => router.back()}
+                  onPress={() => navigation.goBack()}
                   activeOpacity={0.9}
                   testID="cancel"
                 >
@@ -413,8 +412,8 @@ export default function SleepSettingsScreen() {
                       repeatDays: days,
                       enabled,
                       ringtoneId: ringtone,
-                    })
-                    router.back()
+                    });
+                    navigation.goBack();
                   }}
                   activeOpacity={0.9}
                   testID="done"
@@ -427,7 +426,7 @@ export default function SleepSettingsScreen() {
         </LinearGradient>
       </View>
     </ErrorBoundary>
-  )
+  );
 }
 
 type WheelProps = {
