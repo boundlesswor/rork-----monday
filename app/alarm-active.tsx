@@ -7,19 +7,19 @@ import {
   Animated,
   Platform,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import LinearGradient from 'react-native-linear-gradient'; // Замена expo-linear-gradient
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { useNavigation } from '@react-navigation/native'; // Для back
 import { useUserStore } from '@/stores/user-store';
-import { 
-  Volume2, 
-  CheckCircle, 
+import {
+  Volume2,
+  CheckCircle,
   XCircle,
   Brain,
   Clock,
   ArrowLeft,
 } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { trigger } from 'react-native-haptic-feedback'; // Замена expo-haptics
 
 const mathQuestions = [
   { question: "7 × 8 = ?", answer: "56", options: ["54", "56", "58", "60"] },
@@ -31,8 +31,9 @@ const mathQuestions = [
 
 export default function AlarmActiveScreen() {
   const { profile, alarmSettings } = useUserStore();
+  const navigation = useNavigation(); // Для back
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [showResult, setShowResult] = useState(false);
   const [pulseAnim] = useState(new Animated.Value(1));
@@ -54,36 +55,27 @@ export default function AlarmActiveScreen() {
       ])
     );
     pulse.start();
-
     return () => pulse.stop();
   }, []);
 
-  const handleAnswerSelect = (answer: string) => {
+  const handleAnswerSelect = (answer) => {
     if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      trigger('impactLight'); // Замена
     }
     setSelectedAnswer(answer);
   };
 
   const handleSubmitAnswer = () => {
     if (!selectedAnswer) return;
-
     const isCorrect = selectedAnswer === mathQuestions[currentQuestion].answer;
-    
+   
     if (Platform.OS !== 'web') {
-      Haptics.impactAsync(
-        isCorrect 
-          ? Haptics.ImpactFeedbackStyle.Heavy 
-          : Haptics.ImpactFeedbackStyle.Medium
-      );
+      trigger(isCorrect ? 'impactHeavy' : 'impactMedium'); // Замена
     }
-
     if (isCorrect) {
       setCorrectAnswers(prev => prev + 1);
     }
-
     setShowResult(true);
-
     setTimeout(() => {
       if (currentQuestion < mathQuestions.length - 1) {
         setCurrentQuestion(prev => prev + 1);
@@ -92,7 +84,7 @@ export default function AlarmActiveScreen() {
       } else {
         // All questions completed
         setTimeout(() => {
-          router.back();
+          navigation.goBack(); // Замена router.back()
         }, 2000);
       }
     }, 1500);
@@ -110,9 +102,9 @@ export default function AlarmActiveScreen() {
         style={styles.container}
       >
         <SafeAreaView style={styles.safeArea}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.backButton}
-            onPress={() => router.back()}
+            onPress={() => navigation.goBack()} // Замена
           >
             <LinearGradient
               colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.1)']}
@@ -121,7 +113,7 @@ export default function AlarmActiveScreen() {
               <ArrowLeft size={24} color="#FFFFFF" />
             </LinearGradient>
           </TouchableOpacity>
-          
+         
           <View style={styles.resultContainer}>
             {isCorrect ? (
               <CheckCircle size={80} color="#FFFFFF" />
@@ -158,9 +150,9 @@ export default function AlarmActiveScreen() {
       style={styles.container}
     >
       <SafeAreaView style={styles.safeArea}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={() => navigation.goBack()} // Замена
         >
           <LinearGradient
             colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
@@ -169,9 +161,9 @@ export default function AlarmActiveScreen() {
             <ArrowLeft size={24} color="#FFFFFF" />
           </LinearGradient>
         </TouchableOpacity>
-        
+       
         <View style={styles.header}>
-          <Animated.View 
+          <Animated.View
             style={[
               styles.alarmIcon,
               { transform: [{ scale: pulseAnim }] }
@@ -189,7 +181,6 @@ export default function AlarmActiveScreen() {
             Answer correctly to stop the alarm
           </Text>
         </View>
-
         <View style={styles.progressContainer}>
           <View style={styles.progressBar}>
             <View style={[styles.progressFill, { width: `${progress}%` }]} />
@@ -198,7 +189,6 @@ export default function AlarmActiveScreen() {
             Question {currentQuestion + 1} of {mathQuestions.length}
           </Text>
         </View>
-
         <View style={styles.questionContainer}>
           <LinearGradient
             colors={['#1F2937', '#374151']}
@@ -208,7 +198,6 @@ export default function AlarmActiveScreen() {
             <Text style={styles.questionText}>{currentQ.question}</Text>
           </LinearGradient>
         </View>
-
         <View style={styles.optionsContainer}>
           {currentQ.options.map((option, index) => (
             <TouchableOpacity
@@ -220,10 +209,9 @@ export default function AlarmActiveScreen() {
               onPress={() => handleAnswerSelect(option)}
             >
               <LinearGradient
-                colors={selectedAnswer === option 
-                  ? ['#8B5CF6', '#3B82F6'] 
-                  : ['#1F2937', '#374151']
-                }
+                colors={selectedAnswer === option
+                  ? ['#8B5CF6', '#3B82F6']
+                  : ['#1F2937', '#374151']}
                 style={styles.optionGradient}
               >
                 <Text style={[
@@ -236,7 +224,6 @@ export default function AlarmActiveScreen() {
             </TouchableOpacity>
           ))}
         </View>
-
         <View style={styles.footer}>
           <TouchableOpacity
             style={[
@@ -247,16 +234,14 @@ export default function AlarmActiveScreen() {
             disabled={!selectedAnswer}
           >
             <LinearGradient
-              colors={selectedAnswer 
-                ? ['#8B5CF6', '#3B82F6'] 
-                : ['#374151', '#374151']
-              }
+              colors={selectedAnswer
+                ? ['#8B5CF6', '#3B82F6']
+                : ['#374151', '#374151']}
               style={styles.submitButtonGradient}
             >
               <Text style={styles.submitButtonText}>Submit Answer</Text>
             </LinearGradient>
           </TouchableOpacity>
-
           <View style={styles.scoreContainer}>
             <Clock size={16} color="#9CA3AF" />
             <Text style={styles.scoreText}>
