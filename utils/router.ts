@@ -44,7 +44,7 @@ export function push(pathOrName: string) {
   try {
     const { name, params } = mapPathToRoute(pathOrName);
     if (navigationRef.isReady()) {
-      (navigationRef as any).navigate(name, params);
+      (navigationRef as any).navigate(name, params || {});
     } else {
       console.log('[router.push] nav not ready, queued', name, params);
     }
@@ -57,7 +57,7 @@ export function replace(pathOrName: string) {
   try {
     const { name, params } = mapPathToRoute(pathOrName);
     if (navigationRef.isReady()) {
-      navigationRef.dispatch(CommonActions.reset({ index: 0, routes: [{ name: name as string, params }] }));
+      navigationRef.dispatch(CommonActions.reset({ index: 0, routes: [{ name: name as string, params: params || {} }] }));
     } else {
       console.log('[router.replace] nav not ready, queued', name, params);
     }
