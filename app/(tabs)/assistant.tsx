@@ -7,25 +7,28 @@ import {
   ScrollView,
   TextInput,
   Platform,
+  Vibration, // Для базового вибро, если не используешь haptic-feedback
 } from 'react-native';
-import LinearGradient from '@/components/Gradient';
+import LinearGradient from 'react-native-linear-gradient'; // Замена, если был expo
+// Или если '@/components/Gradient' уже на react-native-linear-gradient, импортируй оттуда
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUserStore } from '@/stores/user-store';
-import { 
-  Mic, 
-  Send, 
-  Volume2, 
+import {
+  Mic,
+  Send,
+  // Volume2, // Не используется в коде, можно удалить если не нужно
   Calendar,
   Cloud,
   MessageCircle,
   Sparkles,
 } from 'lucide-react-native';
-import * as Haptics from '@/utils/haptics';
+// import * as Haptics from '@/utils/haptics'; // Удаляем, если Expo-based
+import { trigger } from 'react-native-haptic-feedback'; // Новая lib для haptics
 
 const quickCommands = [
-  { id: 'weather', text: 'What\'s the weather?', icon: Cloud },
+  { id: 'weather', text: "What's the weather?", icon: Cloud },
   { id: 'reminder', text: 'Set a reminder', icon: Calendar },
-  { id: 'chat', text: 'Let\'s chat', icon: MessageCircle },
+  { id: 'chat', text: "Let's chat", icon: MessageCircle },
 ];
 
 export default function AssistantScreen() {
@@ -43,39 +46,36 @@ export default function AssistantScreen() {
 
   const handleSendMessage = () => {
     if (!message.trim()) return;
-
     if (Platform.OS !== 'web') {
-      Haptics.impact('Light');
+      trigger('impactLight'); // Замена Haptics
+      // Или Vibration.vibrate(10); для простоты
     }
-
     const userMessage = {
       id: Date.now().toString(),
       type: 'user',
       text: message,
       timestamp: new Date(),
     };
-
     const assistantResponse = {
       id: (Date.now() + 1).toString(),
       type: 'assistant',
       text: `I understand you said "${message}". This is a demo response. In the full version, I'll provide intelligent responses using AI!`,
       timestamp: new Date(),
     };
-
     setConversation(prev => [...prev, userMessage, assistantResponse]);
     setMessage('');
   };
 
   const handleQuickCommand = (command: string) => {
     if (Platform.OS !== 'web') {
-      Haptics.impact('Light');
+      trigger('impactLight');
     }
     setMessage(command);
   };
 
   const toggleListening = () => {
     if (Platform.OS !== 'web') {
-      Haptics.impact('Medium');
+      trigger('impactMedium');
     }
     setIsListening(!isListening);
     
@@ -108,7 +108,6 @@ export default function AssistantScreen() {
             {isListening ? 'Listening...' : 'Ready to help'}
           </Text>
         </View>
-
         <ScrollView style={styles.conversation} showsVerticalScrollIndicator={false}>
           {conversation.map((msg) => (
             <View
@@ -119,10 +118,9 @@ export default function AssistantScreen() {
               ]}
             >
               <LinearGradient
-                colors={msg.type === 'user' 
-                  ? ['#8B5CF6', '#3B82F6'] 
-                  : ['#1F2937', '#374151']
-                }
+                colors={msg.type === 'user'
+                  ? ['#8B5CF6', '#3B82F6']
+                  : ['#1F2937', '#374151']}
                 style={styles.messageBubble}
               >
                 <Text style={styles.messageText}>{msg.text}</Text>
@@ -130,7 +128,6 @@ export default function AssistantScreen() {
             </View>
           ))}
         </ScrollView>
-
         <View style={styles.quickCommands}>
           <Text style={styles.quickCommandsTitle}>Quick Commands</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -156,7 +153,6 @@ export default function AssistantScreen() {
             </View>
           </ScrollView>
         </View>
-
         <View style={styles.inputContainer}>
           <View style={styles.inputRow}>
             <TouchableOpacity
@@ -167,16 +163,14 @@ export default function AssistantScreen() {
               onPress={toggleListening}
             >
               <LinearGradient
-                colors={isListening 
-                  ? ['#EF4444', '#DC2626'] 
-                  : ['#8B5CF6', '#3B82F6']
-                }
+                colors={isListening
+                  ? ['#EF4444', '#DC2626']
+                  : ['#8B5CF6', '#3B82F6']}
                 style={styles.micButtonGradient}
               >
                 <Mic size={20} color="#FFFFFF" />
               </LinearGradient>
             </TouchableOpacity>
-
             <TextInput
               style={styles.textInput}
               placeholder="Type your message..."
@@ -185,17 +179,15 @@ export default function AssistantScreen() {
               onChangeText={setMessage}
               multiline
             />
-
             <TouchableOpacity
               style={styles.sendButton}
               onPress={handleSendMessage}
               disabled={!message.trim()}
             >
               <LinearGradient
-                colors={message.trim() 
-                  ? ['#8B5CF6', '#3B82F6'] 
-                  : ['#374151', '#374151']
-                }
+                colors={message.trim()
+                  ? ['#8B5CF6', '#3B82F6']
+                  : ['#374151', '#374151']}
                 style={styles.sendButtonGradient}
               >
                 <Send size={20} color="#FFFFFF" />
