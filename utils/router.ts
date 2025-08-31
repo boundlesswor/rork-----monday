@@ -1,25 +1,73 @@
-import { router as expoRouter } from 'expo-router';
+import { createNavigationContainerRef, StackActions, CommonActions } from '@react-navigation/native';
 
-export function push(path: string) {
-  try {
-    expoRouter.push(path as any);
-  } catch (e) {
-    console.log('[router.push] fallback', path, e);
+export type RootStackParamList = {
+  Tabs: undefined;
+  Onboarding: undefined;
+  AlarmActive: undefined;
+  SleepSettings: undefined;
+};
+
+export type TabsParamList = {
+  Home: undefined;
+  Assistant: undefined;
+  Settings: undefined;
+};
+
+export const navigationRef = createNavigationContainerRef<RootStackParamList & TabsParamList>();
+
+function mapPathToRoute(path: string): { name: keyof (RootStackParamList & TabsParamList); params?: object } {
+  switch (path) {
+    case '/onboarding':
+      return { name: 'Onboarding' } as const;
+    case '/alarm-active':
+      return { name: 'AlarmActive' } as const;
+    case '/(tabs)/home':
+    case '/home':
+      return { name: 'Home' } as const;
+    case '/(tabs)/assistant':
+    case '/assistant':
+      return { name: 'Assistant' } as const;
+    case '/(tabs)/settings':
+    case '/settings':
+      return { name: 'Settings' } as const;
+    case '/(tabs)/sleep-settings':
+    case '/sleep-settings':
+      return { name: 'SleepSettings' } as const;
+    default:
+      return { name: 'Home' } as const;
   }
 }
 
-export function replace(path: string) {
+export function push(pathOrName: string) {
   try {
-    expoRouter.replace(path as any);
+    const { name, params } = mapPathToRoute(pathOrName);
+    if (navigationRef.isReady()) {
+      navigationRef.navigate(name as never, params as never);
+    } else {
+      console.log('[router.push] nav not ready, queued', name, params);
+    }
   } catch (e) {
-    console.log('[router.replace] fallback', path, e);
+    console.log('[router.push] error', pathOrName, e);
+  }
+}
+
+export function replace(pathOrName: string) {
+  try {
+    const { name, params } = mapPathToRoute(pathOrName);
+    if (navigationRef.isReady()) {
+      navigationRef.dispatch(CommonActions.reset({ index: 0, routes: [{ name: name as string, params }] }));
+    } else {
+      console.log('[router.replace] nav not ready, queued', name, params);
+    }
+  } catch (e) {
+    console.log('[router.replace] error', pathOrName, e);
   }
 }
 
 export function back() {
   try {
-    expoRouter.back();
+    if (navigationRef.isReady() && navigationRef.canGoBack()) navigationRef.goBack();
   } catch (e) {
-    console.log('[router.back] fallback', e);
+    console.log('[router.back] error', e);
   }
 }

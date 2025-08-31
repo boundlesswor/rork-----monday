@@ -1,6 +1,14 @@
 import React from 'react';
 import { ViewStyle } from 'react-native';
-import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient';
+
+let LG: React.ComponentType<{ colors: string[]; style?: ViewStyle | ViewStyle[] }>;
+try {
+  // @ts-ignore
+  LG = require('react-native-linear-gradient').default;
+} catch (e) {
+  // @ts-ignore
+  LG = require('expo-linear-gradient').LinearGradient;
+}
 
 type Props = {
   colors: readonly string[] | string[];
@@ -10,8 +18,9 @@ type Props = {
 
 export default function LinearGradient({ colors, style, children }: Props) {
   return (
-    <ExpoLinearGradient colors={colors as string[]} style={style as any}>
+    // @ts-ignore
+    <LG colors={colors as string[]} style={style as any}>
       {children}
-    </ExpoLinearGradient>
+    </LG>
   );
 }
