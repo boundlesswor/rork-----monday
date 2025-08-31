@@ -13,14 +13,14 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
-import LinearGradient from '@/components/Gradient';
+import LinearGradient from 'react-native-linear-gradient'; // Замена, если был expo
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUserStore } from '@/stores/user-store';
-import * as nav from '@/utils/router';
-import { 
-  User, 
-  Volume2, 
-  Globe, 
+import { useNavigation } from '@react-navigation/native'; // Новый импорт
+import {
+  User,
+  Volume2,
+  Globe,
   Crown,
   Bell,
   Moon,
@@ -29,16 +29,17 @@ import {
   Star,
   RotateCcw,
 } from 'lucide-react-native';
-import * as Haptics from '@/utils/haptics';
+import { trigger } from 'react-native-haptic-feedback'; // Замена Haptics
 
 export default function SettingsScreen() {
   const { profile, updateProfile, resetOnboarding } = useUserStore();
+  const navigation = useNavigation(); // Для навигации
   const [showPersonalityModal, setShowPersonalityModal] = useState(false);
   const [personalityText, setPersonalityText] = useState(profile?.personalityPrompt || '');
 
   const handleHaptic = () => {
     if (Platform.OS !== 'web') {
-      Haptics.impact('Light');
+      trigger('impactLight');
     }
   };
 
@@ -46,7 +47,7 @@ export default function SettingsScreen() {
     handleHaptic();
     resetOnboarding();
     setTimeout(() => {
-      nav.replace('/onboarding');
+      navigation.replace('onboarding'); // Замена nav.replace
     }, 100);
   };
 
@@ -146,7 +147,7 @@ export default function SettingsScreen() {
     },
   ];
 
-  const renderSettingItem = (item: any) => (
+  const renderSettingItem = (item) => (
     <TouchableOpacity
       key={item.id}
       style={[styles.settingItem, item.disabled && styles.settingItemDisabled]}
@@ -194,7 +195,6 @@ export default function SettingsScreen() {
             <Text style={styles.title}>Settings</Text>
             <Text style={styles.subtitle}>Customize your Monday experience</Text>
           </View>
-
           <View style={styles.premiumCard}>
             <LinearGradient
               colors={['#8B5CF6', '#3B82F6']}
@@ -212,7 +212,6 @@ export default function SettingsScreen() {
               </TouchableOpacity>
             </LinearGradient>
           </View>
-
           {settingSections.map((section) => (
             <View key={section.title} style={styles.section}>
               <Text style={styles.sectionTitle}>{section.title}</Text>
@@ -221,7 +220,6 @@ export default function SettingsScreen() {
               </View>
             </View>
           ))}
-
           <View style={styles.footer}>
             <Text style={styles.footerText}>Monday AI Alarm v1.0.0</Text>
             <Text style={styles.footerSubtext}>
@@ -229,7 +227,7 @@ export default function SettingsScreen() {
             </Text>
           </View>
         </ScrollView>
-        
+       
         <Modal
           visible={showPersonalityModal}
           animationType="slide"
@@ -242,19 +240,19 @@ export default function SettingsScreen() {
               style={styles.modalContainer}
             >
               <SafeAreaView style={styles.modalSafeArea}>
-                <KeyboardAvoidingView 
+                <KeyboardAvoidingView
                   style={styles.modalKeyboardView}
                   behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 >
                   <View style={styles.modalHeader}>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       onPress={() => setShowPersonalityModal(false)}
                       style={styles.modalCloseButton}
                     >
                       <Text style={styles.modalCloseText}>Cancel</Text>
                     </TouchableOpacity>
                     <Text style={styles.modalTitle}>Communication Style</Text>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       onPress={() => {
                         updateProfile({ personalityPrompt: personalityText });
                         setShowPersonalityModal(false);
@@ -265,12 +263,12 @@ export default function SettingsScreen() {
                       <Text style={styles.modalSaveText}>Save</Text>
                     </TouchableOpacity>
                   </View>
-                  
+                 
                   <View style={styles.modalContent}>
                     <Text style={styles.modalSubtitle}>
                       Describe how you want the assistant to communicate with you
                     </Text>
-                    
+                   
                     <TextInput
                       style={[styles.modalTextInput, personalityText.trim().length > 0 && styles.modalTextInputFilled]}
                       placeholder="e.g., 'I want you to be strict and motivating, like a personal trainer. Encourage me and don't let me slack off.'"
